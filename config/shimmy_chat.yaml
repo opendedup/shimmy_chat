@@ -1,0 +1,53 @@
+# Configuration for the Shimmy Chat pipeline nodes
+
+# Parameters for audio_interface_node
+audio_interface_node:
+  ros__parameters:
+    input_device: "alsa_input.usb-SEEED_ReSpeaker_4_Mic_Array__UAC1.0_-00.mono-fallback"
+    output_device: "alsa_output.usb-SEEED_ReSpeaker_4_Mic_Array__UAC1.0_-00.analog-stereo"
+    sample_rate: 16000          # Unified sample rate for input, output, and APM
+    output_volume: 0.4          # Initial output volume (0.0 to 1.0)
+    channels: 1                 # APM works best with mono (forced in code)
+    vad_silence_ms: 300         # VAD logic uses APM frames (10ms): time until speech declared over
+    vad_padding_ms: 200         # VAD logic uses APM frames (10ms): how much audio to keep before speech start
+    # WebRTC APM specific parameters
+    apm_aec_suppression_level: 0  # Echo Cancellation suppression (0: moderate, 1: high, 2: aggressive)
+    apm_aecm_enable: False        # Use AEC Mobile (simpler AEC, less CPU) instead of standard AEC
+    apm_ns_level: 2               # Noise Suppression level (0:low, 1:moderate, 2:high, 3:very high)
+    apm_vad_likelihood: 1         # VAD likelihood (0:aggressive ... 3:conservative)
+    # Debugging
+    debug_save_vad_wav: True
+    debug_wav_output_dir: "/root/jetson-build/tmp/vad_audio"
+
+# Parameters for speech_processor_node
+speech_processor_node:
+  ros__parameters:
+    # google_project_id: "" # REMOVED: Allow fallback to env var GOOGLE_CLOUD_PROJECT
+    google_location: "us-central1" # Or your Vertex AI region
+    gemini_model_name: "gemini-2.0-flash-001" # Model for audio transcription
+
+# Parameters for chat_logic_node
+chat_logic_node:
+  ros__parameters:
+    robot_name: "shimmy"
+    # google_project_id: "your-gcp-project-id" # Optional: Defaults to GOOGLE_CLOUD_PROJECT env var
+    location: "us-central1"         # Vertex AI region for the Gemini model
+    gemini_model_name: "gemini-2.0-flash-001" # Model for chat generation
+    chat_system_prompt: |
+      You are Shimmy, a helpful and friendly robot assistant.
+      Your goal is to respond concisely and naturally to user speech directed at you.
+      Keep responses brief unless asked for details.
+    # Optional Gemini generation parameters (defaults are usually fine)
+    # gemini_temperature: 1.0
+    # gemini_top_p: 0.95
+    # gemini_max_output_tokens: 256
+    response_prefix: "Okay, you said: "
+
+# Parameters for speech_synthesis_node
+speech_synthesis_node:
+  ros__parameters:
+    tts_language_code: "en-US"
+    tts_voice_name: "en-US-Journey-F" # Example Google TTS voice
+    tts_speaking_rate: 1.0
+    tts_pitch: 0.0
+    tts_sample_rate: 16000 # MUST match audio_interface_node unified sample_rate 
